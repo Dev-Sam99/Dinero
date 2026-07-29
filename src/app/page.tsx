@@ -133,44 +133,44 @@ export default function Home() {
       </header>
 
       {/* Navigation Tabs (Persistent directly under header) */}
-      <nav className="flex overflow-x-auto rounded-xl bg-[#1a2e3d] p-1 border border-[#243b4d] text-xs font-serif font-bold no-scrollbar">
+      <nav className="grid grid-cols-3 gap-1 rounded-xl bg-[#1a2e3d] p-1.5 border border-[#243b4d] text-xs font-serif font-bold">
         <button
           type="button"
           onClick={() => setActiveTab("ledger")}
-          className={`flex-1 min-w-[120px] py-2.5 rounded-lg flex items-center justify-center gap-2 transition shrink-0 ${
+          className={`py-2.5 px-2 sm:px-4 rounded-lg flex items-center justify-center gap-1.5 sm:gap-2 transition ${
             activeTab === "ledger"
-              ? "bg-[#b8912f] text-white shadow"
-              : "text-gray-400 hover:text-white"
+              ? "bg-[#b8912f] text-white shadow-md"
+              : "text-gray-400 hover:text-white hover:bg-white/5"
           }`}
         >
-          <BookOpen className="w-4 h-4" />
-          <span>LEDGER VIEW</span>
+          <BookOpen className="w-4 h-4 shrink-0" />
+          <span className="truncate">LEDGER VIEW</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab("budget")}
-          className={`flex-1 min-w-[150px] py-2.5 rounded-lg flex items-center justify-center gap-2 transition shrink-0 ${
+          className={`py-2.5 px-2 sm:px-4 rounded-lg flex items-center justify-center gap-1.5 sm:gap-2 transition ${
             activeTab === "budget"
-              ? "bg-[#b8912f] text-white shadow"
-              : "text-gray-400 hover:text-white"
+              ? "bg-[#b8912f] text-white shadow-md"
+              : "text-gray-400 hover:text-white hover:bg-white/5"
           }`}
         >
-          <PieChart className="w-4 h-4" />
-          <span>BUDGET DASHBOARD</span>
+          <PieChart className="w-4 h-4 shrink-0" />
+          <span className="truncate">BUDGET DASHBOARD</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab("locations")}
-          className={`flex-1 min-w-[120px] py-2.5 rounded-lg flex items-center justify-center gap-2 transition shrink-0 ${
+          className={`py-2.5 px-2 sm:px-4 rounded-lg flex items-center justify-center gap-1.5 sm:gap-2 transition ${
             activeTab === "locations"
-              ? "bg-[#b8912f] text-[#10202b] shadow"
-              : "text-gray-400 hover:text-white"
+              ? "bg-[#b8912f] text-[#10202b] shadow-md"
+              : "text-gray-400 hover:text-white hover:bg-white/5"
           }`}
         >
-          <MapPin className="w-4 h-4" />
-          <span>LOCATIONS</span>
+          <MapPin className="w-4 h-4 shrink-0" />
+          <span className="truncate">LOCATIONS</span>
         </button>
       </nav>
 

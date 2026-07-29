@@ -237,25 +237,23 @@ export default function QuickEntry({
               </div>
 
               {/* Date Selector Pill */}
-              <div className="relative">
+              <div>
                 <button
                   type="button"
                   onClick={() => setShowDatePicker(!showDatePicker)}
-                  className="px-2.5 py-1 rounded-lg border border-[#d8ceba] bg-[#fbf8f3] hover:border-[#b8912f] transition flex items-center gap-1.5 text-xs font-mono font-semibold"
+                  className="px-2.5 py-1.5 rounded-lg border border-[#d8ceba] bg-[#fbf8f3] hover:border-[#b8912f] transition flex items-center gap-1.5 text-xs font-mono font-semibold min-h-[36px]"
                 >
                   <Calendar className="w-3.5 h-3.5 text-[#b8912f]" />
                   <span>{selectedDate === new Date().toISOString().split("T")[0] ? "Today" : selectedDate}</span>
                 </button>
 
                 {showDatePicker && (
-                  <div className="absolute right-0 top-9 z-50">
-                    <SharedDatePicker
-                      mode="day"
-                      value={selectedDate}
-                      onChange={(d) => setSelectedDate(d)}
-                      onClose={() => setShowDatePicker(false)}
-                    />
-                  </div>
+                  <SharedDatePicker
+                    mode="day"
+                    value={selectedDate}
+                    onChange={(d) => setSelectedDate(d)}
+                    onClose={() => setShowDatePicker(false)}
+                  />
                 )}
               </div>
             </div>
