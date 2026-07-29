@@ -1,0 +1,21 @@
+{
+  "name": "Dinero",
+  "short_name": "Dinero",
+  "description": "Personal expense tracker PWA for household split across locations",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#10202b",
+  "theme_color": "#10202b",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

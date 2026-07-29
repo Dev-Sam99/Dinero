@@ -1,0 +1,45 @@
+# Dependencies
+/node_modules
+/.pnpm
+/.yarn
+
+# Next.js build output
+/.next/
+/out/
+
+# Production build
+/build
+
+# Debug logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env*
+!.env.example
+
+# IDE & OS files
+.DS_Store
+*.pem
+.vscode/
+.idea/
+
+# Database dumps & exports
+*.sql
+dinero_export.sql
+
+# Temporary scripts & test helpers
+src/audit_categories.ts
+src/execute_category_split.ts
+src/inspect_*.ts
+src/refine_*.ts
+src/setup_*.ts
+src/test_*.ts
+src/verify_*.ts
+
+# Antigravity & Scratch files
+scratch/
+tsconfig.tsbuildinfo
