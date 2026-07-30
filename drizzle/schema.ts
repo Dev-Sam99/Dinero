@@ -18,6 +18,7 @@ export const categories = pgTable("categories", {
 	locationId: integer("location_id").notNull(),
 	monthlyBudget: numeric("monthly_budget", { precision: 10, scale:  2 }).default('0').notNull(),
 	keywords: text().array().default([""]).notNull(),
+	iconOverride: text("icon_override"),
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
 	active: boolean().default(true).notNull(),
 }, (table) => [

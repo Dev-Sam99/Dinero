@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import SharedDatePicker from "./SharedDatePicker";
 import VehiclePicker from "./VehiclePicker";
 import FamilyMemberPicker from "./FamilyMemberPicker";
@@ -15,11 +15,14 @@ import {
 import { capitalizeFirst } from "../lib/utils";
 import { Calendar, Sparkles } from "lucide-react";
 
+import { useToast } from "./ToastProvider";
+
 interface QuickEntryProps {
   locations: { id: number; name: string; color: string; active: boolean }[];
   categories: { id: number; name: string; keywords: string[]; locationId: number }[];
   vehicles: { id: number; name: string; type: string }[];
   familyMembers?: { id: number; name: string; keywords: string[] }[];
+  recentShortcuts?: string[];
   onExpenseAdded: () => void;
   onVehicleCreated?: (v: { id: number; name: string; type: string }) => void;
   onFamilyMemberCreated?: (fm: { id: number; name: string; keywords: string[] }) => void;
@@ -30,19 +33,24 @@ export default function QuickEntry({
   categories,
   vehicles,
   familyMembers = [],
+  recentShortcuts = [],
   onExpenseAdded,
   onVehicleCreated,
   onFamilyMemberCreated,
 }: QuickEntryProps) {
+  const { showToast } = useToast();
+  const containerRef = useRef<HTMLDivElement>(null);
   const [rawInput, setRawInput] = useState("");
   const [selectedLocationId, setSelectedLocationId] = useState<number>(
     locations.length > 0 ? locations[0].id : 1
   );
-  const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
-  );
+  const [selectedDate, setSelectedDate] = useState<string>("");
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    setSelectedDate(new Date().toISOString().split("T")[0]);
+  }, []);
 
   // Post-submit inline prompt state
   const [lastLoggedExpense, setLastLoggedExpense] = useState<{
@@ -60,6 +68,23 @@ export default function QuickEntry({
   const activeLocations = locations.filter((l) => l.active);
 
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // Click outside to collapse Quick Entry
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setIsExpanded(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,6 +143,7 @@ export default function QuickEntry({
 
         setRawInput("");
         setIsExpanded(false);
+        showToast("Entry added to ledger");
         onExpenseAdded();
       }
     } catch (err) {
@@ -158,7 +184,10 @@ export default function QuickEntry({
   };
 
   return (
-    <div className="bg-[#f2ece0] border-2 border-[#b8912f] rounded-xl p-3 sm:p-4 shadow-lg mb-6 text-[#10202b]">
+    <div
+      ref={containerRef}
+      className="bg-[#f2ece0] border-2 border-[#b8912f] rounded-xl p-3 sm:p-4 shadow-lg mb-6 text-[#10202b]"
+    >
       <form onSubmit={handleSubmit} className="space-y-3">
         {/* Single-line bar when collapsed vs header when expanded */}
         <div className="flex items-center gap-2">
@@ -188,7 +217,7 @@ export default function QuickEntry({
             disabled={submitting || !parsed.amount}
             className={`px-3 py-1.5 rounded-lg font-serif font-bold text-xs shrink-0 tracking-wide transition shadow ${
               parsed.amount && !submitting
-                ? "bg-[#b8912f] text-white hover:bg-[#967321] active:scale-[0.99]"
+                ? "bg-[#b8912f] text-white btn-primary-hover active:scale-[0.99]"
                 : "bg-gray-300 text-gray-500 cursor-not-allowed"
             }`}
           >
@@ -196,9 +225,29 @@ export default function QuickEntry({
           </button>
         </div>
 
-        {/* Expanded Options */}
+        {/* Quick-tap Shortcuts (Top 3-5 distinct recent/frequent entries) */}
+        {!rawInput && recentShortcuts.length > 0 && (
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+            <span className="text-[11px] font-serif font-bold text-gray-500 shrink-0">Quick:</span>
+            {recentShortcuts.map((sc, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => {
+                  setRawInput(sc);
+                  setIsExpanded(true);
+                }}
+                className="px-2 py-0.5 rounded-full bg-[#fbf8f3] border border-[#d8ceba] text-gray-700 pill-hover shrink-0 font-sans text-[11px]"
+              >
+                {sc}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Expanded Options with Smooth Fade/Height Transition */}
         {isExpanded && (
-          <div className="pt-2 border-t border-[#d8ceba] space-y-3">
+          <div className="pt-2 border-t border-[#d8ceba] space-y-3 animate-fade-scale">
             {parsed.amount !== null && (
               <div className="text-xs flex items-center gap-2 text-gray-700 bg-[#fbf8f3] px-3 py-1.5 rounded border border-[#d8ceba]">
                 <Sparkles className="w-3.5 h-3.5 text-[#b8912f]" />
@@ -220,10 +269,10 @@ export default function QuickEntry({
                       key={loc.id}
                       type="button"
                       onClick={() => setSelectedLocationId(loc.id)}
-                      className={`px-2.5 py-1 rounded-full text-xs font-semibold transition border ${
+                      className={`px-2.5 py-1 rounded-full text-xs font-semibold pill-hover transition border ${
                         isSelected
                           ? "text-white border-transparent shadow"
-                          : "bg-[#fbf8f3] text-[#10202b] border-[#d8ceba] hover:border-[#b8912f]"
+                          : "bg-[#fbf8f3] text-[#10202b] border-[#d8ceba]"
                       }`}
                       style={{
                         backgroundColor: isSelected ? loc.color : undefined,

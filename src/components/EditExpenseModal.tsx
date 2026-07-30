@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import SharedDatePicker from "./SharedDatePicker";
 import { Calendar } from "lucide-react";
 
@@ -25,12 +26,17 @@ export default function EditExpenseModal({
   onSave,
   onClose,
 }: EditExpenseModalProps) {
+  const [mounted, setMounted] = useState(false);
   const [amount, setAmount] = useState(expense.amount);
   const [note, setNote] = useState(expense.note || "");
   const [date, setDate] = useState(expense.date);
   const [locationId, setLocationId] = useState(expense.locationId);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const activeLocations = locations.filter((l) => l.active);
 
@@ -63,9 +69,17 @@ export default function EditExpenseModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-[#f2ece0] border-2 border-[#b8912f] rounded-xl p-5 shadow-2xl text-[#10202b] max-w-sm w-full animate-in fade-in zoom-in duration-150">
+  if (!mounted) return null;
+
+  return createPortal(
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-60 bg-black/65 backdrop-blur-xs flex items-center justify-center p-4 animate-backdrop-in"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-[#f2ece0] border-2 border-[#b8912f] rounded-xl p-5 shadow-2xl text-[#10202b] max-w-sm w-full animate-modal-in"
+      >
         <div className="flex items-center justify-between border-b border-[#d8ceba] pb-3 mb-4">
           <h3 className="font-serif font-bold text-base text-[#10202b]">
             Edit Expense #{expense.id}
@@ -183,6 +197,7 @@ export default function EditExpenseModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

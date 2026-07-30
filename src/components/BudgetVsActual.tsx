@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SharedDatePicker from "./SharedDatePicker";
 import ManageBudgetsModal from "./ManageBudgetsModal";
 import AllCategoriesQuickViewModal from "./AllCategoriesQuickViewModal";
@@ -38,14 +38,17 @@ export default function BudgetVsActual({
   overrides = [],
   onRefresh,
 }: BudgetVsActualProps) {
-  const today = new Date();
-  const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
-
-  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonthStr);
+  const [selectedMonth, setSelectedMonth] = useState<string>("");
   const [selectedLocationId, setSelectedLocationId] = useState<number | null>(null);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [showManageModal, setShowManageModal] = useState(false);
   const [showQuickViewModal, setShowQuickViewModal] = useState(false);
+
+  useEffect(() => {
+    const today = new Date();
+    const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+    setSelectedMonth(currentMonthStr);
+  }, []);
   const [selectedCategoryForManage, setSelectedCategoryForManage] = useState<any>(null);
 
   const [catPage, setCatPage] = useState(1);
@@ -107,7 +110,7 @@ export default function BudgetVsActual({
   const [showAllCategories, setShowAllCategories] = useState(false);
 
   const filteredCategories = categories.filter((c) =>
-    selectedLocationId ? c.locationId === selectedLocationId : true
+    c.active !== false && (selectedLocationId ? c.locationId === selectedLocationId : true)
   );
 
   const totalCatPages = Math.ceil(filteredCategories.length / CAT_PAGE_SIZE) || 1;
@@ -168,17 +171,15 @@ export default function BudgetVsActual({
             </button>
 
             {showMonthPicker && (
-              <div className="absolute right-0 top-10 z-50">
-                <SharedDatePicker
-                  mode="month"
-                  value={selectedMonth}
-                  onChange={(m) => {
-                    setSelectedMonth(m);
-                    setCatPage(1);
-                  }}
-                  onClose={() => setShowMonthPicker(false)}
-                />
-              </div>
+              <SharedDatePicker
+                mode="month"
+                value={selectedMonth}
+                onChange={(m) => {
+                  setSelectedMonth(m);
+                  setCatPage(1);
+                }}
+                onClose={() => setShowMonthPicker(false)}
+              />
             )}
           </div>
 
@@ -219,7 +220,7 @@ export default function BudgetVsActual({
       </div>
 
       {/* Overall Summary Card */}
-      <div className="bg-[#fbf8f3] border border-[#d8ceba] rounded-lg p-4 mb-6 shadow-sm">
+      <div className="bg-[#fbf8f3] border-2 border-[#b8912f] rounded-lg p-4 mb-6 shadow-md">
         <div className="grid grid-cols-3 gap-2 text-center mb-3">
           <div>
             <span className="text-[10px] font-serif font-bold uppercase tracking-wider text-gray-500 block">
@@ -261,7 +262,7 @@ export default function BudgetVsActual({
             </div>
             <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
               <div
-                className={`h-full transition-all duration-300 ${getBarColorClass(overallPct)}`}
+                className={`h-full transition-all duration-500 ease-out ${getBarColorClass(overallPct)}`}
                 style={{ width: `${Math.min(overallPct, 100)}%` }}
               />
             </div>
@@ -287,17 +288,17 @@ export default function BudgetVsActual({
             return (
               <div
                 key={loc.id}
-                className="bg-[#fbf8f3] border border-[#d8ceba] rounded-lg p-3 shadow-sm transition hover:border-[#b8912f]"
+                className="bg-[#fbf8f3] border border-[#d8ceba] rounded-lg p-3 shadow-sm card-expand-hover"
               >
                 <button
                   type="button"
                   onClick={() => toggleLocationExpand(loc.id)}
-                  className="w-full text-left cursor-pointer"
+                  className="w-full text-left cursor-pointer group"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span
-                        className="w-3 h-3 rounded-full inline-block shrink-0"
+                        className="w-3 h-3 rounded-full inline-block shrink-0 pill-hover"
                         style={{ backgroundColor: loc.color }}
                       />
                       <span className="font-serif font-bold text-sm text-[#10202b]">
@@ -312,9 +313,9 @@ export default function BudgetVsActual({
                         ₹{locActual.toLocaleString("en-IN")} / ₹{locBudget.toLocaleString("en-IN")}
                       </span>
                       {isExpanded ? (
-                        <ChevronUp className="w-4 h-4 text-gray-500 shrink-0" />
+                        <ChevronUp className="w-4 h-4 text-gray-500 shrink-0 chevron-nudge transition-transform duration-180" />
                       ) : (
-                        <ChevronDown className="w-4 h-4 text-gray-500 shrink-0" />
+                        <ChevronDown className="w-4 h-4 text-gray-500 shrink-0 chevron-nudge transition-transform duration-180" />
                       )}
                     </div>
                   </div>
@@ -333,7 +334,7 @@ export default function BudgetVsActual({
 
                 {/* Collapsible Location Categories */}
                 {isExpanded && (
-                  <div className="mt-3 pt-3 border-t border-[#e4dbca] space-y-2">
+                  <div className="mt-3 pt-3 border-t border-[#e4dbca] space-y-2 animate-fade-scale">
                     <h4 className="font-serif text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1">
                       Categories in {capitalizeFirst(loc.name)}
                     </h4>
@@ -545,60 +546,68 @@ export default function BudgetVsActual({
               </button>
 
               {showCatPagePicker && (
-                <div className="absolute left-1/2 -translate-x-1/2 bottom-10 z-50 bg-[#f2ece0] border-2 border-[#b8912f] rounded-xl p-3 shadow-2xl w-48 text-[#10202b]">
-                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#d8ceba]">
-                    <span className="font-serif font-bold text-xs">Jump to Page</span>
-                    <button
-                      type="button"
-                      onClick={() => setShowCatPagePicker(false)}
-                      className="text-gray-500 hover:text-black text-xs"
-                    >
-                      ✕
-                    </button>
-                  </div>
-
-                  <form onSubmit={handleCatJumpSubmit} className="space-y-2">
-                    <div className="flex items-center gap-1.5">
-                      <input
-                        type="number"
-                        min="1"
-                        max={totalCatPages}
-                        value={catJumpInput}
-                        onChange={(e) => setCatJumpInput(e.target.value)}
-                        className="w-full px-2 py-1 border border-[#d8ceba] bg-[#fbf8f3] rounded font-mono font-bold text-xs text-[#10202b] focus:outline-none focus:border-[#b8912f]"
-                        placeholder="Page #"
-                        autoFocus
-                      />
+                <div
+                  className="fixed inset-0 z-[100] bg-black/65 backdrop-blur-xs flex items-center justify-center p-4 animate-backdrop-in"
+                  onClick={() => setShowCatPagePicker(false)}
+                >
+                  <div
+                    className="bg-[#f2ece0] border-2 border-[#b8912f] rounded-xl p-4 shadow-2xl w-64 max-w-[90vw] text-[#10202b] animate-modal-in my-auto"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#d8ceba]">
+                      <span className="font-serif font-bold text-sm">Jump to Page</span>
                       <button
-                        type="submit"
-                        className="px-2.5 py-1 rounded bg-[#b8912f] text-white text-xs font-serif font-bold hover:bg-[#a07c24]"
+                        type="button"
+                        onClick={() => setShowCatPagePicker(false)}
+                        className="text-gray-500 hover:text-black text-sm p-1"
                       >
-                        Go
+                        ✕
                       </button>
                     </div>
-                  </form>
 
-                  {totalCatPages <= 30 && (
-                    <div className="mt-2.5 pt-2 border-t border-[#d8ceba] max-h-32 overflow-y-auto grid grid-cols-5 gap-1">
-                      {Array.from({ length: totalCatPages }, (_, i) => i + 1).map((p) => (
+                    <form onSubmit={handleCatJumpSubmit} className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min="1"
+                          max={totalCatPages}
+                          value={catJumpInput}
+                          onChange={(e) => setCatJumpInput(e.target.value)}
+                          className="w-full px-3 py-1.5 border border-[#d8ceba] bg-[#fbf8f3] rounded font-mono font-bold text-sm text-[#10202b] focus:outline-none focus:border-[#b8912f]"
+                          placeholder="Page #"
+                          autoFocus
+                        />
                         <button
-                          key={p}
-                          type="button"
-                          onClick={() => {
-                            setCatPage(p);
-                            setShowCatPagePicker(false);
-                          }}
-                          className={`p-1 text-[11px] font-mono rounded text-center transition ${
-                            p === catPage
-                              ? "bg-[#10202b] text-white font-bold"
-                              : "bg-[#fbf8f3] hover:bg-[#e4dbca] text-[#10202b]"
-                          }`}
+                          type="submit"
+                          className="px-3 py-1.5 rounded bg-[#b8912f] text-white text-xs font-serif font-bold hover:bg-[#a07c24]"
                         >
-                          {p}
+                          Go
                         </button>
-                      ))}
-                    </div>
-                  )}
+                      </div>
+                    </form>
+
+                    {totalCatPages <= 30 && (
+                      <div className="mt-3 pt-2.5 border-t border-[#d8ceba] max-h-36 overflow-y-auto grid grid-cols-5 gap-1.5">
+                        {Array.from({ length: totalCatPages }, (_, i) => i + 1).map((p) => (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => {
+                              setCatPage(p);
+                              setShowCatPagePicker(false);
+                            }}
+                            className={`p-1.5 text-xs font-mono rounded text-center transition ${
+                              p === catPage
+                                ? "bg-[#10202b] text-white font-bold"
+                                : "bg-[#fbf8f3] hover:bg-[#e4dbca] text-[#10202b]"
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -638,10 +647,12 @@ export default function BudgetVsActual({
         categories={categories}
         locations={locations}
         budgets={budgets}
+        expenses={expenses}
         onSelectCategoryToEdit={(cat) => {
           setSelectedCategoryForManage(cat);
           setShowManageModal(true);
         }}
+        onRefresh={onRefresh}
       />
     </div>
   );

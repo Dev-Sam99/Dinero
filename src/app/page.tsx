@@ -7,6 +7,8 @@ import BudgetVsActual from "../components/BudgetVsActual";
 import LocationsManagement from "../components/LocationsManagement";
 import { BookOpen, PieChart, MapPin, RefreshCw } from "lucide-react";
 
+import { SkeletonCard } from "../components/Skeletons";
+
 const DEFAULT_PAGE_SIZE = 10;
 
 export default function Home() {
@@ -25,6 +27,11 @@ export default function Home() {
   const [overrides, setOverrides] = useState<any[]>([]);
 
   const [loading, setLoading] = useState(true);
+
+  // Compute top 4 distinct recent entry rawTexts
+  const recentShortcuts = Array.from(
+    new Set(allExpensesForBudget.map((e) => e.rawText).filter(Boolean))
+  ).slice(0, 4);
 
   const fetchExpensesPage = async (pageNum: number) => {
     try {
@@ -125,7 +132,7 @@ export default function Home() {
         <button
           type="button"
           onClick={() => fetchAllData(false)}
-          className="p-2 rounded-lg bg-[#1a2e3d] text-gray-300 hover:text-white border border-[#243b4d] transition"
+          className="p-2.5 rounded-lg bg-[#1a2e3d] text-gray-300 hover:text-white hover:bg-[#243b4d] border border-[#243b4d] transition-all duration-200 hover:scale-105 active:scale-95 min-w-[44px] min-h-[44px] flex items-center justify-center shadow-sm"
           title="Refresh Data"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
@@ -133,43 +140,43 @@ export default function Home() {
       </header>
 
       {/* Navigation Tabs (Persistent directly under header) */}
-      <nav className="grid grid-cols-3 gap-1 rounded-xl bg-[#1a2e3d] p-1.5 border border-[#243b4d] text-xs font-serif font-bold">
+      <nav className="grid grid-cols-3 gap-1.5 rounded-xl bg-[#1a2e3d] p-1.5 border border-[#243b4d] text-xs font-serif font-bold shadow-md">
         <button
           type="button"
           onClick={() => setActiveTab("ledger")}
-          className={`py-2.5 px-2 sm:px-4 rounded-lg flex items-center justify-center gap-1.5 sm:gap-2 transition ${
+          className={`py-2.5 px-2 sm:px-4 rounded-lg flex items-center justify-center gap-1.5 sm:gap-2 transition-all duration-200 active:scale-[0.98] ${
             activeTab === "ledger"
-              ? "bg-[#b8912f] text-white shadow-md"
-              : "text-gray-400 hover:text-white hover:bg-white/5"
+              ? "bg-[#b8912f] text-white shadow-md ring-1 ring-[#d4a944]/40"
+              : "text-gray-400 nav-tab-hover"
           }`}
         >
-          <BookOpen className="w-4 h-4 shrink-0" />
+          <BookOpen className="w-4 h-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
           <span className="truncate">LEDGER VIEW</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab("budget")}
-          className={`py-2.5 px-2 sm:px-4 rounded-lg flex items-center justify-center gap-1.5 sm:gap-2 transition ${
+          className={`py-2.5 px-2 sm:px-4 rounded-lg flex items-center justify-center gap-1.5 sm:gap-2 transition-all duration-200 active:scale-[0.98] ${
             activeTab === "budget"
-              ? "bg-[#b8912f] text-white shadow-md"
-              : "text-gray-400 hover:text-white hover:bg-white/5"
+              ? "bg-[#b8912f] text-white shadow-md ring-1 ring-[#d4a944]/40"
+              : "text-gray-400 nav-tab-hover"
           }`}
         >
-          <PieChart className="w-4 h-4 shrink-0" />
+          <PieChart className="w-4 h-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
           <span className="truncate">BUDGET DASHBOARD</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab("locations")}
-          className={`py-2.5 px-2 sm:px-4 rounded-lg flex items-center justify-center gap-1.5 sm:gap-2 transition ${
+          className={`py-2.5 px-2 sm:px-4 rounded-lg flex items-center justify-center gap-1.5 sm:gap-2 transition-all duration-200 active:scale-[0.98] ${
             activeTab === "locations"
-              ? "bg-[#b8912f] text-[#10202b] shadow-md"
-              : "text-gray-400 hover:text-white hover:bg-white/5"
+              ? "bg-[#b8912f] text-[#10202b] shadow-md ring-1 ring-[#d4a944]/40 font-bold"
+              : "text-gray-400 nav-tab-hover"
           }`}
         >
-          <MapPin className="w-4 h-4 shrink-0" />
+          <MapPin className="w-4 h-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
           <span className="truncate">LOCATIONS</span>
         </button>
       </nav>
@@ -181,19 +188,22 @@ export default function Home() {
           categories={categories}
           vehicles={vehicles}
           familyMembers={familyMembers}
+          recentShortcuts={recentShortcuts}
           onExpenseAdded={() => fetchAllData(true)}
           onVehicleCreated={(v) => setVehicles((prev) => [...prev, v])}
           onFamilyMemberCreated={(fm) => setFamilyMembers((prev) => [...prev, fm])}
         />
       )}
 
-      {/* View Content */}
+      {/* View Content with smooth slide/fade transition */}
       {loading ? (
-        <div className="text-center py-12 text-gray-400 font-serif">
-          Loading Dinero ledger records...
+        <div className="space-y-3 py-4">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
         </div>
       ) : (
-        <div>
+        <div key={activeTab} className="animate-fade-scale transition-all duration-200">
           {activeTab === "ledger" && (
             <LedgerList
               expenses={expenses}

@@ -12,6 +12,24 @@ body {
   background-color: #10202b;
   color: #f2ece0;
   font-family: var(--font-inter);
+  -webkit-tap-highlight-color: transparent;
+}
+
+html:has(body.modal-open),
+body.modal-open {
+  overflow: hidden !important;
+  height: 100vh !important;
+  touch-action: none !important;
+}
+
+/* Global Smooth Transitions (Calm Passbook Aesthetic 150ms-250ms) */
+button, a, input, select, textarea, [role="button"] {
+  transition: background-color 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Custom Scrollbar */
@@ -26,3 +44,120 @@ body {
   background: #b8912f;
   border-radius: 3px;
 }
+::-webkit-scrollbar-thumb:hover {
+  background: #d4a944;
+}
+
+/* Interactive Hover Effects (Desktop pointer fine, strictly avoid touch sticky hover) */
+@media (hover: hover) and (pointer: fine) {
+  /* 1. Ledger rows subtle background tint */
+  .ledger-row-hover:hover {
+    background-color: #f6f1e7 !important;
+  }
+
+  /* 2. Category, vehicle, family pills slight lift / border glow */
+  .pill-hover {
+    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.18s ease;
+  }
+  .pill-hover:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 0 4px 12px -2px rgba(184, 145, 47, 0.25);
+    border-color: #b8912f !important;
+  }
+
+  /* 3. Primary Buttons subtle darken/lighten hover */
+  .btn-primary-hover:hover {
+    background-color: #967321 !important;
+    box-shadow: 0 4px 12px rgba(184, 145, 47, 0.3);
+  }
+
+  .btn-secondary-hover:hover {
+    background-color: #f0e6d5 !important;
+    border-color: #b8912f !important;
+  }
+
+  /* 4. Category icons scale-up (1.03x - 1.05x) */
+  .cat-icon-hover {
+    transition: transform 0.18s ease-out;
+  }
+  .cat-icon-hover:hover,
+  button:hover .cat-icon-hover {
+    transform: scale(1.05);
+  }
+
+  /* 5. Collapsible location cards hover border-highlight & chevron nudge */
+  .card-expand-hover {
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  }
+  .card-expand-hover:hover {
+    border-color: #b8912f !important;
+    box-shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.08);
+  }
+  .card-expand-hover:hover .chevron-nudge {
+    transform: translateY(2px);
+  }
+
+  /* 6. Inactive navigation tabs hover */
+  .nav-tab-hover:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+  }
+
+  /* 7. Hover-revealed action icons opacity transition */
+  .action-icon-hover {
+    opacity: 0.6;
+    transition: opacity 0.18s ease, transform 0.18s ease, background-color 0.18s ease;
+  }
+  .action-icon-hover:hover {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+/* Modals & Popovers Fade + Scale Animation */
+@keyframes modalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes backdropFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-modal-in {
+  animation: modalScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-backdrop-in {
+  animation: backdropFadeIn 0.18s ease-out forwards;
+}
+
+/* Collapsible Height & Opacity Transition Utility */
+.collapsible-transition {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-fade-scale {
+  animation: modalScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-[#fade-list] {
+  animation: backdropFadeIn 0.15s ease-out forwards;
+}
+
+button:active, [role="button"]:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+

@@ -5,6 +5,7 @@ import { X, Calendar, Settings, History, ChevronDown, ChevronUp, Plus, Edit2, Al
 import SharedDatePicker from "./SharedDatePicker";
 import { getCategoryIcon, capitalizeFirst } from "../lib/utils";
 import { BudgetOverrideRow } from "../lib/budget-resolver";
+import Modal from "./Modal";
 
 interface Category {
   id: number;
@@ -67,20 +68,35 @@ export default function ManageBudgetsModal({
   const [showToPicker, setShowToPicker] = useState<boolean>(false);
 
   // For Override form
-  const currentMonthDefault = selectedMonth || new Date().toISOString().slice(0, 7);
-  const [overrideMonth, setOverrideMonth] = useState<string>(currentMonthDefault);
+  const [overrideMonth, setOverrideMonth] = useState<string>(selectedMonth || "");
   const [showOverrideMonthPicker, setShowOverrideMonthPicker] = useState<boolean>(false);
 
   const [expandedHistory, setExpandedHistory] = useState<{ [catId: number]: boolean }>({});
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const todayStr = new Date().toISOString().split("T")[0];
+  const [todayStr, setTodayStr] = useState<string>("");
 
   useEffect(() => {
-    if (isOpen && initialCategoryToEdit) {
-      handleOpenNewBudget(initialCategoryToEdit);
+    const t = new Date();
+    setTodayStr(t.toISOString().split("T")[0]);
+    if (!selectedMonth) {
+      setOverrideMonth(t.toISOString().slice(0, 7));
     }
+  }, [selectedMonth]);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add("modal-open");
+      if (initialCategoryToEdit) {
+        handleOpenNewBudget(initialCategoryToEdit);
+      }
+    } else {
+      document.body.classList.remove("modal-open");
+    }
+    return () => {
+      document.body.classList.remove("modal-open");
+    };
   }, [isOpen, initialCategoryToEdit]);
 
   if (!isOpen) return null;
@@ -128,7 +144,7 @@ export default function ManageBudgetsModal({
 
   // 3. Open single-month override form
   const handleOpenOverride = (cat: Category) => {
-    const targetMonth = selectedMonth || currentMonthDefault;
+    const targetMonth = selectedMonth || overrideMonth || new Date().toISOString().slice(0, 7);
     const [yStr, mStr] = targetMonth.split("-");
     const existingOv = overrides.find(
       (o) => o.categoryId === cat.id && o.year === parseInt(yStr, 10) && o.month === parseInt(mStr, 10)
@@ -239,10 +255,9 @@ export default function ManageBudgetsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto">
-      <div className="bg-[#f2ece0] border-2 border-[#b8912f] rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col text-[#10202b] relative overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b-2 border-[#b8912f] p-4 bg-[#e8decb]">
+    <Modal isOpen={isOpen} onClose={onClose} maxWidthClass="max-w-3xl" zIndexClass="z-[100]">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b-2 border-[#b8912f] p-4 bg-[#e8decb]">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-lg bg-[#10202b] text-[#b8912f] flex items-center justify-center">
               <Settings className="w-5 h-5" />
@@ -299,7 +314,7 @@ export default function ManageBudgetsModal({
                     );
 
                     // Check active override for selected month
-                    const targetMonth = selectedMonth || currentMonthDefault;
+                    const targetMonth = selectedMonth || overrideMonth || "";
                     const [yStr, mStr] = targetMonth.split("-");
                     const activeOverride = overrides.find(
                       (o) => o.categoryId === cat.id && o.year === parseInt(yStr, 10) && o.month === parseInt(mStr, 10)
@@ -474,220 +489,219 @@ export default function ManageBudgetsModal({
         </div>
 
         {/* Modal Form Dialog */}
-        {editingCategory && formMode && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4">
-            <div className="bg-[#f2ece0] border-2 border-[#b8912f] rounded-xl shadow-2xl max-w-md w-full p-5 text-[#10202b] relative">
-              <div className="flex items-center justify-between border-b border-[#b8912f] pb-3 mb-4">
-                <div className="flex items-center gap-2">
-                  <span className="font-serif font-bold text-base text-[#10202b]">
-                    {formMode === "correct"
-                      ? `Correct Entry for ${editingCategory.name}`
-                      : formMode === "override"
-                      ? `One-Off Month Override (${editingCategory.name})`
-                      : `Set New Budget for ${editingCategory.name}`}
-                  </span>
-                </div>
+        <Modal
+          isOpen={!!(editingCategory && formMode)}
+          onClose={() => {
+            setEditingCategory(null);
+            setFormMode(null);
+          }}
+          maxWidthClass="max-w-md"
+          zIndexClass="z-[110]"
+        >
+          <div className="flex items-center justify-between border-b border-[#b8912f] pb-3 p-5 bg-[#e8decb]">
+            <div className="flex items-center gap-2">
+              <span className="font-serif font-bold text-base text-[#10202b]">
+                {formMode === "correct"
+                  ? `Correct Entry for ${editingCategory?.name}`
+                  : formMode === "override"
+                  ? `One-Off Month Override (${editingCategory?.name})`
+                  : `Set New Budget for ${editingCategory?.name}`}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setEditingCategory(null);
+                setFormMode(null);
+              }}
+              className="p-1 rounded hover:bg-[#d8ceba] text-gray-700"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="p-5 overflow-y-auto">
+            {errorMessage && (
+              <div className="mb-4 p-3 rounded-lg bg-red-100 border border-red-300 text-red-800 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {formMode === "override" ? (
+                <>
+                  {/* Override Month Selector */}
+                  <div className="relative">
+                    <label className="block text-xs font-serif font-bold uppercase tracking-wider text-gray-700 mb-1">
+                      Override Target Month *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowOverrideMonthPicker(!showOverrideMonthPicker)}
+                      className="w-full px-3 py-2 border border-[#d8ceba] bg-[#fbf8f3] rounded-lg font-mono text-xs text-[#10202b] flex items-center justify-between hover:border-[#b8912f]"
+                    >
+                      <span>{overrideMonth}</span>
+                      <Calendar className="w-4 h-4 text-[#b8912f]" />
+                    </button>
+
+                    {showOverrideMonthPicker && (
+                      <SharedDatePicker
+                        mode="month"
+                        value={overrideMonth}
+                        onChange={(m) => setOverrideMonth(m)}
+                        onClose={() => setShowOverrideMonthPicker(false)}
+                      />
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-serif font-bold uppercase tracking-wider text-gray-700 mb-1">
+                      One-Time Override Amount (₹) *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      required
+                      placeholder="e.g. 12000"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      className="w-full px-3 py-2 border border-[#d8ceba] bg-[#fbf8f3] rounded-lg font-mono font-bold text-sm text-[#10202b] focus:outline-none focus:border-[#b8912f]"
+                      autoFocus
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-xs font-serif font-bold uppercase tracking-wider text-gray-700 mb-1">
+                      Monthly Budget Amount (₹) *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      required
+                      placeholder="e.g. 5000"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      className="w-full px-3 py-2 border border-[#d8ceba] bg-[#fbf8f3] rounded-lg font-mono font-bold text-sm text-[#10202b] focus:outline-none focus:border-[#b8912f]"
+                      autoFocus
+                    />
+                  </div>
+
+                  {/* Effective From Date */}
+                  <div className="relative">
+                    <label className="block text-xs font-serif font-bold uppercase tracking-wider text-gray-700 mb-1">
+                      Effective From Date *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowFromPicker(!showFromPicker);
+                        setShowToPicker(false);
+                      }}
+                      className="w-full px-3 py-2 border border-[#d8ceba] bg-[#fbf8f3] rounded-lg font-mono text-xs text-[#10202b] flex items-center justify-between hover:border-[#b8912f]"
+                    >
+                      <span>{effectiveFrom || "Select date"}</span>
+                      <Calendar className="w-4 h-4 text-[#b8912f]" />
+                    </button>
+
+                    {showFromPicker && (
+                      <SharedDatePicker
+                        mode="day"
+                        value={effectiveFrom}
+                        allowFuture={true}
+                        onChange={(d) => setEffectiveFrom(d)}
+                        onClose={() => setShowFromPicker(false)}
+                      />
+                    )}
+                  </div>
+
+                  {/* Effective To Date (Optional) */}
+                  <div className="relative">
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-serif font-bold uppercase tracking-wider text-gray-700">
+                        Effective To Date (Optional)
+                      </label>
+                      {effectiveTo && (
+                        <button
+                          type="button"
+                          onClick={() => setEffectiveTo("")}
+                          className="text-[10px] text-red-600 hover:underline font-serif"
+                        >
+                          Clear (Open-ended)
+                        </button>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowToPicker(!showToPicker);
+                        setShowFromPicker(false);
+                      }}
+                      className="w-full px-3 py-2 border border-[#d8ceba] bg-[#fbf8f3] rounded-lg font-mono text-xs text-[#10202b] flex items-center justify-between hover:border-[#b8912f]"
+                    >
+                      <span>{effectiveTo || "Open-ended (No end date)"}</span>
+                      <Calendar className="w-4 h-4 text-[#b8912f]" />
+                    </button>
+
+                    {showToPicker && (
+                      <SharedDatePicker
+                        mode="day"
+                        value={effectiveTo || todayStr}
+                        allowFuture={true}
+                        onChange={(d) => setEffectiveTo(d)}
+                        onClose={() => setShowToPicker(false)}
+                      />
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* Optional Note */}
+              <div>
+                <label className="block text-xs font-serif font-bold uppercase tracking-wider text-gray-700 mb-1">
+                  Note (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder={formMode === "override" ? "e.g. Host family dinner" : "e.g. Corrected typo / updated rate"}
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  className="w-full px-3 py-2 border border-[#d8ceba] bg-[#fbf8f3] rounded-lg text-xs text-[#10202b] focus:outline-none focus:border-[#b8912f]"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#d8ceba]">
                 <button
                   type="button"
                   onClick={() => {
                     setEditingCategory(null);
                     setFormMode(null);
                   }}
-                  className="p-1 rounded hover:bg-[#d8ceba] text-gray-700"
+                  className="px-4 py-2 rounded-lg border border-[#d8ceba] bg-[#fbf8f3] hover:bg-[#e4dbca] text-xs font-serif font-bold text-[#10202b]"
                 >
-                  <X className="w-4 h-4" />
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-4 py-2 rounded-lg bg-[#b8912f] hover:bg-[#a07c24] text-white text-xs font-serif font-bold flex items-center gap-1.5 shadow"
+                >
+                  {submitting
+                    ? "Saving..."
+                    : formMode === "correct"
+                    ? "Update Row In-Place"
+                    : formMode === "override"
+                    ? "Save Override"
+                    : "Save New Budget"}
                 </button>
               </div>
-
-              {errorMessage && (
-                <div className="mb-4 p-3 rounded-lg bg-red-100 border border-red-300 text-red-800 text-xs flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-                  <span>{errorMessage}</span>
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {formMode === "override" ? (
-                  <>
-                    {/* Override Month Selector */}
-                    <div className="relative">
-                      <label className="block text-xs font-serif font-bold uppercase tracking-wider text-gray-700 mb-1">
-                        Override Target Month *
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => setShowOverrideMonthPicker(!showOverrideMonthPicker)}
-                        className="w-full px-3 py-2 border border-[#d8ceba] bg-[#fbf8f3] rounded-lg font-mono text-xs text-[#10202b] flex items-center justify-between hover:border-[#b8912f]"
-                      >
-                        <span>{overrideMonth}</span>
-                        <Calendar className="w-4 h-4 text-[#b8912f]" />
-                      </button>
-
-                      {showOverrideMonthPicker && (
-                        <div className="absolute left-0 top-16 z-50">
-                          <SharedDatePicker
-                            mode="month"
-                            value={overrideMonth}
-                            onChange={(m) => setOverrideMonth(m)}
-                            onClose={() => setShowOverrideMonthPicker(false)}
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-serif font-bold uppercase tracking-wider text-gray-700 mb-1">
-                        One-Time Override Amount (₹) *
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        required
-                        placeholder="e.g. 12000"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        className="w-full px-3 py-2 border border-[#d8ceba] bg-[#fbf8f3] rounded-lg font-mono font-bold text-sm text-[#10202b] focus:outline-none focus:border-[#b8912f]"
-                        autoFocus
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div>
-                      <label className="block text-xs font-serif font-bold uppercase tracking-wider text-gray-700 mb-1">
-                        Monthly Budget Amount (₹) *
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        required
-                        placeholder="e.g. 5000"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        className="w-full px-3 py-2 border border-[#d8ceba] bg-[#fbf8f3] rounded-lg font-mono font-bold text-sm text-[#10202b] focus:outline-none focus:border-[#b8912f]"
-                        autoFocus
-                      />
-                    </div>
-
-                    {/* Effective From Date */}
-                    <div className="relative">
-                      <label className="block text-xs font-serif font-bold uppercase tracking-wider text-gray-700 mb-1">
-                        Effective From Date *
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowFromPicker(!showFromPicker);
-                          setShowToPicker(false);
-                        }}
-                        className="w-full px-3 py-2 border border-[#d8ceba] bg-[#fbf8f3] rounded-lg font-mono text-xs text-[#10202b] flex items-center justify-between hover:border-[#b8912f]"
-                      >
-                        <span>{effectiveFrom || "Select date"}</span>
-                        <Calendar className="w-4 h-4 text-[#b8912f]" />
-                      </button>
-
-                      {showFromPicker && (
-                        <div className="absolute left-0 top-16 z-50">
-                          <SharedDatePicker
-                            mode="day"
-                            value={effectiveFrom}
-                            allowFuture={true}
-                            onChange={(d) => setEffectiveFrom(d)}
-                            onClose={() => setShowFromPicker(false)}
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Effective To Date (Optional) */}
-                    <div className="relative">
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="text-xs font-serif font-bold uppercase tracking-wider text-gray-700">
-                          Effective To Date (Optional)
-                        </label>
-                        {effectiveTo && (
-                          <button
-                            type="button"
-                            onClick={() => setEffectiveTo("")}
-                            className="text-[10px] text-red-600 hover:underline font-serif"
-                          >
-                            Clear (Open-ended)
-                          </button>
-                        )}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowToPicker(!showToPicker);
-                          setShowFromPicker(false);
-                        }}
-                        className="w-full px-3 py-2 border border-[#d8ceba] bg-[#fbf8f3] rounded-lg font-mono text-xs text-[#10202b] flex items-center justify-between hover:border-[#b8912f]"
-                      >
-                        <span>{effectiveTo || "Open-ended (No end date)"}</span>
-                        <Calendar className="w-4 h-4 text-[#b8912f]" />
-                      </button>
-
-                      {showToPicker && (
-                        <div className="absolute left-0 top-16 z-50">
-                          <SharedDatePicker
-                            mode="day"
-                            value={effectiveTo || todayStr}
-                            allowFuture={true}
-                            onChange={(d) => setEffectiveTo(d)}
-                            onClose={() => setShowToPicker(false)}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-
-                {/* Optional Note */}
-                <div>
-                  <label className="block text-xs font-serif font-bold uppercase tracking-wider text-gray-700 mb-1">
-                    Note (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder={formMode === "override" ? "e.g. Host family dinner" : "e.g. Corrected typo / updated rate"}
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    className="w-full px-3 py-2 border border-[#d8ceba] bg-[#fbf8f3] rounded-lg text-xs text-[#10202b] focus:outline-none focus:border-[#b8912f]"
-                  />
-                </div>
-
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#d8ceba]">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingCategory(null);
-                      setFormMode(null);
-                    }}
-                    className="px-4 py-2 rounded-lg border border-[#d8ceba] bg-[#fbf8f3] hover:bg-[#e4dbca] text-xs font-serif font-bold text-[#10202b]"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="px-4 py-2 rounded-lg bg-[#b8912f] hover:bg-[#a07c24] text-white text-xs font-serif font-bold flex items-center gap-1.5 shadow"
-                  >
-                    {submitting
-                      ? "Saving..."
-                      : formMode === "correct"
-                      ? "Update Row In-Place"
-                      : formMode === "override"
-                      ? "Save Override"
-                      : "Save New Budget"}
-                  </button>
-                </div>
-              </form>
-            </div>
+            </form>
           </div>
-        )}
-      </div>
-    </div>
+        </Modal>
+    </Modal>
   );
 }
