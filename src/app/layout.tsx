@@ -27,6 +27,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap"
           rel="stylesheet"
         />
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
       <body suppressHydrationWarning className="min-h-screen bg-[#10202b] text-[#f2ece0] antialiased selection:bg-[#b8912f] selection:text-white">
         <script
