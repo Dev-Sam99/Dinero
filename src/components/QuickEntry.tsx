@@ -92,9 +92,10 @@ export default function QuickEntry({
 
     setSubmitting(true);
     try {
-      const autoCatId = autoCategorizeExpense(parsed.note, categories, selectedLocationId);
-      const autoVehId = autoMatchVehicle(parsed.note, vehicles);
-      const autoFamilyId = autoMatchFamilyMember(parsed.note, familyMembers);
+      const searchNote = parsed.note.trim() || rawInput.trim();
+      const autoCatId = autoCategorizeExpense(searchNote, categories, selectedLocationId);
+      const autoVehId = autoMatchVehicle(searchNote, vehicles);
+      const autoFamilyId = autoMatchFamilyMember(searchNote, familyMembers);
 
       const res = await fetch("/api/expenses", {
         method: "POST",
@@ -320,28 +321,53 @@ export default function QuickEntry({
         )}
       </form>
 
-      {/* Optional Vehicle or Family Member Follow-up Prompt */}
-      {lastLoggedExpense && lastLoggedExpense.promptType === "vehicle" && (
-        <div className="mt-4 pt-3 border-t border-dashed border-[#b8912f]">
-          <VehiclePicker
-            vehicles={vehicles}
-            selectedVehicleId={promptVehicleId}
-            onSelect={handleAssignVehicle}
-            onVehicleAdded={onVehicleCreated}
-            showSkip={true}
-          />
-        </div>
-      )}
+      {/* Modal Follow-up Prompt for Vehicle / Family Member */}
+      {lastLoggedExpense && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-md bg-[#162736] border border-[#243b4d] rounded-2xl shadow-2xl overflow-hidden p-5 animate-scale-up">
+            <div className="flex items-center justify-between border-b border-[#243b4d] pb-3 mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-[#1b3447] border border-[#2a455a] flex items-center justify-center text-[#b8912f] font-serif font-bold text-sm">
+                  D
+                </div>
+                <div>
+                  <h3 className="font-serif text-base font-bold text-[#f2ece0]">
+                    {lastLoggedExpense.promptType === "vehicle" ? "Select Vehicle" : "Select Family Member"}
+                  </h3>
+                  <p className="text-xs text-[#a0b0be]">
+                    Added: <strong className="text-[#f2ece0]">₹{lastLoggedExpense.amount}</strong> ({lastLoggedExpense.note || "Expense"})
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLastLoggedExpense(null)}
+                className="text-[#a0b0be] hover:text-[#f2ece0] p-1 rounded-lg hover:bg-[#1b3447] transition text-sm"
+              >
+                ✕
+              </button>
+            </div>
 
-      {lastLoggedExpense && lastLoggedExpense.promptType === "family" && (
-        <div className="mt-4 pt-3 border-t border-dashed border-[#b8912f]">
-          <FamilyMemberPicker
-            familyMembers={familyMembers}
-            selectedFamilyMemberId={promptFamilyMemberId}
-            onSelect={handleAssignFamilyMember}
-            onFamilyMemberAdded={onFamilyMemberCreated}
-            showSkip={true}
-          />
+            {lastLoggedExpense.promptType === "vehicle" && (
+              <VehiclePicker
+                vehicles={vehicles}
+                selectedVehicleId={promptVehicleId}
+                onSelect={handleAssignVehicle}
+                onVehicleAdded={onVehicleCreated}
+                showSkip={true}
+              />
+            )}
+
+            {lastLoggedExpense.promptType === "family" && (
+              <FamilyMemberPicker
+                familyMembers={familyMembers}
+                selectedFamilyMemberId={promptFamilyMemberId}
+                onSelect={handleAssignFamilyMember}
+                onFamilyMemberAdded={onFamilyMemberCreated}
+                showSkip={true}
+              />
+            )}
+          </div>
         </div>
       )}
     </div>

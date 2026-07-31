@@ -5,6 +5,7 @@ import QuickEntry from "../components/QuickEntry";
 import LedgerList from "../components/LedgerList";
 import BudgetVsActual from "../components/BudgetVsActual";
 import LocationsManagement from "../components/LocationsManagement";
+import UserHeaderControl from "../components/UserHeaderControl";
 import { BookOpen, PieChart, MapPin, RefreshCw } from "lucide-react";
 
 import { SkeletonCard } from "../components/Skeletons";
@@ -129,14 +130,17 @@ export default function Home() {
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => fetchAllData(false)}
-          className="p-2.5 rounded-lg bg-[#1a2e3d] text-gray-300 hover:text-white hover:bg-[#243b4d] border border-[#243b4d] transition-all duration-200 hover:scale-105 active:scale-95 min-w-[44px] min-h-[44px] flex items-center justify-center shadow-sm"
-          title="Refresh Data"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-        </button>
+        <div className="flex items-center gap-2">
+          <UserHeaderControl />
+          <button
+            type="button"
+            onClick={() => fetchAllData(false)}
+            className="p-2.5 rounded-lg bg-[#1a2e3d] text-gray-300 hover:text-white hover:bg-[#243b4d] border border-[#243b4d] transition-all duration-200 hover:scale-105 active:scale-95 min-w-[44px] min-h-[44px] flex items-center justify-center shadow-sm"
+            title="Refresh Data"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+          </button>
+        </div>
       </header>
 
       {/* Navigation Tabs (Persistent directly under header) */}

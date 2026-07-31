@@ -30,19 +30,33 @@ export function autoCategorizeExpense(
   const normalizedNote = note.toLowerCase();
   if (!normalizedNote) return null;
 
-  // Filter by location if specified
-  const filteredCategories = selectedLocationId
+  // Primary search: Filter by selected location if specified
+  const primaryCategories = selectedLocationId
     ? categories.filter((c) => c.locationId === selectedLocationId)
     : categories;
 
   let bestMatch: { id: number; keywordLength: number } | null = null;
 
-  for (const cat of filteredCategories) {
+  for (const cat of primaryCategories) {
     for (const kw of cat.keywords) {
       const normalizedKw = kw.trim().toLowerCase();
       if (normalizedKw && normalizedNote.includes(normalizedKw)) {
         if (!bestMatch || normalizedKw.length > bestMatch.keywordLength) {
           bestMatch = { id: cat.id, keywordLength: normalizedKw.length };
+        }
+      }
+    }
+  }
+
+  // Fallback search: If no match found in primary location categories, search all remaining categories (e.g. Common)
+  if (!bestMatch && selectedLocationId) {
+    for (const cat of categories) {
+      for (const kw of cat.keywords) {
+        const normalizedKw = kw.trim().toLowerCase();
+        if (normalizedKw && normalizedNote.includes(normalizedKw)) {
+          if (!bestMatch || normalizedKw.length > bestMatch.keywordLength) {
+            bestMatch = { id: cat.id, keywordLength: normalizedKw.length };
+          }
         }
       }
     }

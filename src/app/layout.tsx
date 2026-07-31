@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ToastProvider } from "../components/ToastProvider";
 import OfflineBanner from "../components/OfflineBanner";
+import AuthProvider from "../components/AuthProvider";
 
 export const metadata: Metadata = {
   title: "Dinero | Personal Expense Tracker",
@@ -41,12 +42,14 @@ export default function RootLayout({
             `,
           }}
         />
-        <ToastProvider>
-          <OfflineBanner />
-          <main className="max-w-4xl lg:max-w-5xl mx-auto px-3 py-4 sm:px-6 sm:py-8">
-            {children}
-          </main>
-        </ToastProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <OfflineBanner />
+            <main className="max-w-4xl lg:max-w-5xl mx-auto px-3 py-4 sm:px-6 sm:py-8">
+              {children}
+            </main>
+          </ToastProvider>
+        </AuthProvider>
       </body>
     </html>
   );

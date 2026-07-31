@@ -73,8 +73,31 @@ export const familyMembers = pgTable("family_members", {
 	unique("family_members_name_key").on(table.name),
 ]);
 
+export const users = pgTable("users", {
+	id: serial("id").primaryKey(),
+	email: text("email").notNull().unique(),
+	passwordHash: text("password_hash").notNull(),
+	name: text("name"),
+	status: text("status").notNull().default("pending"),
+	role: text("role").notNull().default("user"),
+	resetToken: text("reset_token"),
+	resetTokenExpiry: timestamp("reset_token_expiry", { mode: 'date' }),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+});
+
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+	id: serial("id").primaryKey(),
+	userId: integer("user_id").references(() => users.id).notNull(),
+	tokenHash: text("token_hash").notNull(),
+	expiresAt: timestamp("expires_at").notNull(),
+	used: boolean("used").notNull().default(false),
+	createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+
 export const expenses = pgTable("expenses", {
 	id: serial().primaryKey().notNull(),
+	userId: integer("user_id").references(() => users.id).notNull(),
 	amount: numeric({ precision: 10, scale:  2 }).notNull(),
 	rawText: text("raw_text").notNull(),
 	note: text(),
@@ -86,9 +109,14 @@ export const expenses = pgTable("expenses", {
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
 	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [users.id],
+			name: "expenses_user_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
 			columns: [table.categoryId],
 			foreignColumns: [categories.id],
-			name: "expenses_category_id_fkey"
+			name: "categories_category_id_fkey"
 		}).onDelete("set null"),
 	foreignKey({
 			columns: [table.vehicleId],
