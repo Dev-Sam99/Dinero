@@ -14,12 +14,21 @@ export async function isAdmin(sessionOrEmail?: any): Promise<boolean> {
 
   if (!email) return false;
 
+  // Check if role is admin in session token
+  if (sessionOrEmail?.user?.role === "admin") {
+    return true;
+  }
+
   const adminEnv = process.env.ADMIN_EMAIL;
-  if (!adminEnv) return false;
+  if (adminEnv) {
+    const adminEmails = adminEnv
+      .split(",")
+      .map((e) => e.trim().toLowerCase());
 
-  const adminEmails = adminEnv
-    .split(",")
-    .map((e) => e.trim().toLowerCase());
+    if (adminEmails.includes(email.toLowerCase())) {
+      return true;
+    }
+  }
 
-  return adminEmails.includes(email.toLowerCase());
+  return false;
 }
