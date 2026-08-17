@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/db";
@@ -7,10 +9,10 @@ import { desc, eq, count } from "drizzle-orm";
 export async function GET(req: Request) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    const userId = session?.user?.id ? parseInt(session.user.id, 10) : NaN;
+    if (isNaN(userId)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const userId = parseInt(session.user.id, 10);
 
     const { searchParams } = new URL(req.url);
     const pageParam = searchParams.get("page");
@@ -95,10 +97,10 @@ function parseOptionalInt(val: any): number | null {
 export async function POST(req: Request) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    const userId = session?.user?.id ? parseInt(session.user.id, 10) : NaN;
+    if (isNaN(userId)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const userId = parseInt(session.user.id, 10);
 
     const body = await req.json();
     console.log("POST /api/expenses incoming body:", JSON.stringify(body));
