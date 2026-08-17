@@ -29,6 +29,8 @@ export async function GET(req: Request) {
           familyMemberId: expenses.familyMemberId,
           locationId: expenses.locationId,
           date: expenses.date,
+          isPrepaid: expenses.isPrepaid,
+          coverageDays: expenses.coverageDays,
           createdAt: expenses.createdAt,
         })
         .from(expenses)
@@ -60,6 +62,8 @@ export async function GET(req: Request) {
         familyMemberId: expenses.familyMemberId,
         locationId: expenses.locationId,
         date: expenses.date,
+        isPrepaid: expenses.isPrepaid,
+        coverageDays: expenses.coverageDays,
         createdAt: expenses.createdAt,
       })
       .from(expenses)
@@ -99,7 +103,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     console.log("POST /api/expenses incoming body:", JSON.stringify(body));
 
-    const { amount, rawText, note, categoryId, vehicleId, familyMemberId, locationId, date } = body;
+    const { amount, rawText, note, categoryId, vehicleId, familyMemberId, locationId, date, isPrepaid, coverageDays } = body;
 
     if (!amount || !locationId || !date) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -109,6 +113,7 @@ export async function POST(req: Request) {
     const cleanVehicleId = parseOptionalInt(vehicleId);
     const cleanFamilyMemberId = parseOptionalInt(familyMemberId);
     const cleanLocationId = Number(locationId);
+    const cleanCoverageDays = parseOptionalInt(coverageDays);
 
     const inserted = await db
       .insert(expenses)
@@ -122,6 +127,8 @@ export async function POST(req: Request) {
         familyMemberId: cleanFamilyMemberId,
         locationId: cleanLocationId,
         date: date,
+        isPrepaid: Boolean(isPrepaid),
+        coverageDays: cleanCoverageDays,
       })
       .returning();
 

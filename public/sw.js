@@ -1,25 +1,35 @@
-const CACHE_NAME = "dinero-v2";
-const urlsToCache = ["/", "/manifest.json", "/icons/icon-192.png", "/icons/icon-512.png"];
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
 
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache);
-    })
-  );
+  try {
+    const data = event.data.json();
+    const title = data.title || "Dinero Reminder";
+    const options = {
+      body: data.body || "You have an upcoming bill or reminder due.",
+      icon: "/icon-192x192.png",
+      badge: "/icon-192x192.png",
+      data: { url: data.url || "/" },
+    };
+
+    event.waitUntil(self.registration.showNotification(title, options));
+  } catch (err) {
+    console.error("Push notification parsing error:", err);
+  }
 });
 
-self.addEventListener("fetch", (event) => {
-  const url = new URL(event.request.url);
-
-  // Skip service worker caching for Next.js dev bundles and API routes
-  if (url.pathname.startsWith("/_next") || url.pathname.startsWith("/api")) {
-    return;
-  }
-
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const urlToOpen = event.notification.data?.url || "/";
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
+      for (let client of windowClients) {
+        if (client.url === urlToOpen && "focus" in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
     })
   );
 });

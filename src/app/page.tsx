@@ -5,15 +5,29 @@ import QuickEntry from "../components/QuickEntry";
 import LedgerList from "../components/LedgerList";
 import BudgetVsActual from "../components/BudgetVsActual";
 import LocationsManagement from "../components/LocationsManagement";
+import RemindersPage from "../components/RemindersPage";
 import UserHeaderControl from "../components/UserHeaderControl";
-import { BookOpen, PieChart, MapPin, RefreshCw } from "lucide-react";
+import { BookOpen, PieChart, MapPin, Bell, RefreshCw } from "lucide-react";
 
 import { SkeletonCard } from "../components/Skeletons";
 
 const DEFAULT_PAGE_SIZE = 10;
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"ledger" | "budget" | "locations">("ledger");
+  const [activeTab, setActiveTab] = useState<"ledger" | "budget" | "locations" | "reminders">("ledger");
+  const [dueRemindersCount, setDueRemindersCount] = useState(0);
+
+  const fetchDueRemindersCount = async () => {
+    try {
+      const res = await fetch("/api/reminders/due");
+      if (res.ok) {
+        const data = await res.json();
+        setDueRemindersCount(Array.isArray(data) ? data.length : 0);
+      }
+    } catch (err) {
+      console.error("Failed to fetch due reminders count", err);
+    }
+  };
 
   const [expenses, setExpenses] = useState<any[]>([]);
   const [allExpensesForBudget, setAllExpensesForBudget] = useState<any[]>([]);
@@ -105,6 +119,7 @@ export default function Home() {
 
   useEffect(() => {
     fetchAllData();
+    fetchDueRemindersCount();
   }, []);
 
   const handlePageChange = (newPage: number) => {
@@ -144,7 +159,7 @@ export default function Home() {
       </header>
 
       {/* Navigation Tabs (Persistent directly under header) */}
-      <nav className="grid grid-cols-3 gap-1.5 rounded-xl bg-[#1a2e3d] p-1.5 border border-[#243b4d] text-xs font-serif font-bold shadow-md">
+      <nav className="grid grid-cols-4 gap-1.5 rounded-xl bg-[#1a2e3d] p-1.5 border border-[#243b4d] text-xs font-serif font-bold shadow-md">
         <button
           type="button"
           onClick={() => setActiveTab("ledger")}
@@ -168,7 +183,25 @@ export default function Home() {
           }`}
         >
           <PieChart className="w-4 h-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
-          <span className="truncate">BUDGET DASHBOARD</span>
+          <span className="truncate">BUDGET</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("reminders")}
+          className={`py-2.5 px-2 sm:px-4 rounded-lg flex items-center justify-center gap-1.5 sm:gap-2 transition-all duration-200 active:scale-[0.98] relative ${
+            activeTab === "reminders"
+              ? "bg-[#b8912f] text-white shadow-md ring-1 ring-[#d4a944]/40"
+              : "text-gray-400 nav-tab-hover"
+          }`}
+        >
+          <Bell className="w-4 h-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+          <span className="truncate">REMINDERS</span>
+          {dueRemindersCount > 0 && (
+            <span className="ml-1 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-mono font-bold leading-none animate-pulse">
+              {dueRemindersCount}
+            </span>
+          )}
         </button>
 
         <button
@@ -234,6 +267,18 @@ export default function Home() {
               budgets={budgets}
               overrides={overrides}
               onRefresh={fetchAllData}
+            />
+          )}
+
+          {activeTab === "reminders" && (
+            <RemindersPage
+              categories={categories}
+              locations={locations}
+              vehicles={vehicles}
+              onRefreshParent={() => {
+                fetchAllData();
+                fetchDueRemindersCount();
+              }}
             />
           )}
 

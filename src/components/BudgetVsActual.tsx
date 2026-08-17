@@ -65,15 +65,23 @@ export default function BudgetVsActual({
   const lastDay = new Date(numYear, numMonth, 0).getDate();
   const monthEnd = `${selectedMonth}-${String(lastDay).padStart(2, "0")}`;
 
-  // Filter expenses for selected month
-  const monthExpenses = expenses.filter((e) => {
+  // Filter expenses for selected month (normal spend excludes isPrepaid per spec)
+  const monthExpenses = expenses.filter((e: any) => {
     const isMonth = e.date >= monthStart && e.date <= monthEnd;
     const isLoc = selectedLocationId ? e.locationId === selectedLocationId : true;
-    return isMonth && isLoc;
+    return isMonth && isLoc && !e.isPrepaid;
   });
 
-  // Calculate actual total spend
+  // Filter prepaid expenses for selected month
+  const monthPrepaidExpenses = expenses.filter((e: any) => {
+    const isMonth = e.date >= monthStart && e.date <= monthEnd;
+    const isLoc = selectedLocationId ? e.locationId === selectedLocationId : true;
+    return isMonth && isLoc && e.isPrepaid;
+  });
+
+  // Calculate actual total spend for normal expenses
   const totalActual = monthExpenses.reduce((acc, e) => acc + parseFloat(e.amount), 0);
+  const totalPrepaid = monthPrepaidExpenses.reduce((acc, e: any) => acc + parseFloat(e.amount), 0);
 
   // Filter locations to consider
   const activeLocations = locations.filter((l) =>
@@ -620,6 +628,49 @@ export default function BudgetVsActual({
             >
               Next →
             </button>
+          </div>
+        )}
+
+        {/* Prepaid / Lump Payments Callout Section */}
+        {monthPrepaidExpenses.length > 0 && (
+          <div className="mt-6 pt-4 border-t-2 border-dashed border-[#b8912f]/40">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-[#b8912f]" />
+                <h4 className="font-serif font-bold text-sm text-[#10202b]">
+                  Prepaid / Lump Payments ({monthPrepaidExpenses.length})
+                </h4>
+              </div>
+              <span className="font-mono font-bold text-sm text-[#b8912f]">
+                Total: ₹{totalPrepaid.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+            <p className="text-xs text-gray-500 mb-3">
+              Excluded from monthly budget totals to prevent false budget-blown alerts.
+            </p>
+
+            <div className="space-y-2">
+              {monthPrepaidExpenses.map((pe: any) => {
+                const cat = categories.find((c) => c.id === pe.categoryId);
+                return (
+                  <div
+                    key={pe.id}
+                    className="flex items-center justify-between p-2.5 bg-[#fbf8f3] rounded-lg border border-[#d8ceba] text-xs"
+                  >
+                    <div>
+                      <span className="font-semibold text-[#10202b]">{pe.rawText || "Prepaid Payment"}</span>
+                      {cat && <span className="ml-2 px-2 py-0.5 rounded bg-[#e4dbca] text-[10px] text-gray-700 font-mono">{cat.name}</span>}
+                      {pe.coverageDays && (
+                        <span className="ml-2 text-[10px] text-gray-500 italic">
+                          ({pe.coverageDays} days coverage)
+                        </span>
+                      )}
+                    </div>
+                    <span className="font-mono font-bold text-[#b8912f]">₹{parseFloat(pe.amount).toFixed(2)}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

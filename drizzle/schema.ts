@@ -106,6 +106,8 @@ export const expenses = pgTable("expenses", {
 	familyMemberId: integer("family_member_id"),
 	locationId: integer("location_id").notNull(),
 	date: date().notNull(),
+	isPrepaid: boolean("is_prepaid").notNull().default(false),
+	coverageDays: integer("coverage_days"),
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
 	foreignKey({
@@ -143,3 +145,51 @@ export const vehicles = pgTable("vehicles", {
 }, (table) => [
 	unique("vehicles_name_key").on(table.name),
 ]);
+
+export const reminders = pgTable("reminders", {
+	id: serial("id").primaryKey(),
+	userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+	type: text("type").notNull(), // 'bill' | 'manual'
+	title: text("title").notNull(),
+	notes: text("notes"),
+	amount: numeric("amount", { precision: 10, scale: 2 }),
+	categoryId: integer("category_id").references(() => categories.id, { onDelete: "set null" }),
+	locationId: integer("location_id").references(() => locations.id, { onDelete: "set null" }),
+	vehicleId: integer("vehicle_id").references(() => vehicles.id, { onDelete: "set null" }),
+	dueDate: date("due_date").notNull(),
+	recurrence: text("recurrence").default("none"), // 'none' | 'weekly' | 'monthly' | 'yearly' | 'custom_days'
+	recurrenceDay: integer("recurrence_day"),
+	recurrenceIntervalDays: integer("recurrence_interval_days"),
+	remindBeforeDays: integer("remind_before_days").notNull().default(1),
+	status: text("status").notNull().default("active"), // 'active' | 'paused' | 'done'
+	lastNotifiedAt: timestamp("last_notified_at"),
+	createdAt: timestamp("created_at").defaultNow(),
+	updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const reminderDeliveries = pgTable("reminder_deliveries", {
+	id: serial("id").primaryKey(),
+	reminderId: integer("reminder_id").references(() => reminders.id, { onDelete: "cascade" }).notNull(),
+	channel: text("channel").notNull(), // 'in_app' | 'push' | 'email'
+	sentAt: timestamp("sent_at").defaultNow(),
+	status: text("status").notNull(), // 'sent' | 'failed'
+	errorMessage: text("error_message"),
+});
+
+export const pushSubscriptions = pgTable("push_subscriptions", {
+	id: serial("id").primaryKey(),
+	userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+	endpoint: text("endpoint").notNull(),
+	p256dh: text("p256dh").notNull(),
+	auth: text("auth").notNull(),
+	createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const notificationPreferences = pgTable("notification_preferences", {
+	userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).primaryKey(),
+	inAppEnabled: boolean("in_app_enabled").notNull().default(true),
+	pushEnabled: boolean("push_enabled").notNull().default(false),
+	emailEnabled: boolean("email_enabled").notNull().default(false),
+	email: text("email"),
+});
+
