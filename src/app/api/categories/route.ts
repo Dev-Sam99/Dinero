@@ -13,7 +13,6 @@ export async function GET() {
         keywords: ["gas cylinder refill", "gas cylinder", "cylinder", "lpg", "gas", "refill", "gas refill", "hp gas", "indane", "bharat gas"],
       })
       .where(eq(categories.name, "cylinder"))
-      .execute()
       .catch(() => {});
 
     await db
@@ -23,7 +22,6 @@ export async function GET() {
         keywords: ["gas cylinder refill", "gas cylinder", "cylinder", "lpg", "gas", "refill", "gas refill", "hp gas", "indane", "bharat gas"],
       })
       .where(eq(categories.name, "Cylinder"))
-      .execute()
       .catch(() => {});
 
     const allCategories = await db.select().from(categories).where(eq(categories.active, true));
