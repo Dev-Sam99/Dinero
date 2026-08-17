@@ -52,12 +52,8 @@ function SigninForm() {
         // Fetch current session to check role and redirect accordingly
         const sessionRes = await fetch("/api/auth/session");
         const sessionData = await sessionRes.json();
-        if (sessionData?.user?.role === "admin") {
-          router.push("/manage-x9k2");
-        } else {
-          router.push(callbackUrl);
-        }
-        router.refresh();
+        const targetUrl = sessionData?.user?.role === "admin" ? "/manage-x9k2" : callbackUrl;
+        window.location.href = targetUrl;
       }
     } catch (err) {
       setErrorMsg("An unexpected error occurred during sign in.");

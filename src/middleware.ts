@@ -23,8 +23,9 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const secret = process.env.AUTH_SECRET || "dinero-secret-key-change-in-production";
-  const token = await getToken({ req, secret });
+  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "dinero-secret-key-change-in-production";
+  const secureCookie = req.url.startsWith("https://");
+  const token = await getToken({ req, secret, secureCookie });
 
   if (!token || !token.id) {
     const signinUrl = new URL("/signin", req.url);
